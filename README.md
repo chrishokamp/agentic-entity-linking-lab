@@ -1,6 +1,14 @@
-# Wikidata Entity Linking Lab
+# Entity Linking Lab
 
-This repository is for students. Use it to set up the lab on your laptop, run the baseline notebook, and then change the local knowledge base and linker yourself.
+Welcome to the entity linking lab! Over the course of a few hours, we hope to demonstrate: 
+- what wikidata is, and the basics of the SPARQL query language
+- a very simple entity linking pipeline backed by a small Knowledge Base derived from Wikidata 
+- patterns for extending our entity linking pipeline with
+  - vector-based disambiguation
+  - context aware linking using an AI agent 
+
+## Quickstart 
+
 
 Open the main notebook here:
 
@@ -8,7 +16,7 @@ Open the main notebook here:
 
 ## What You Will Build
 
-You will build a very simple entity linker backed by Wikidata:
+You will build an entity linker backed by Wikidata:
 
 1. Run one SPARQL query against Wikidata.
 2. Turn the returned rows into a tiny local knowledge base.
@@ -47,8 +55,6 @@ You need one of:
 
 1. An API key for an OpenAI-compatible model provider
 2. A working local model setup such as Ollama
-
-We do not plan to spend much lab time debugging API setup. If you want to work on agentic linking, set that up in advance.
 
 Recommended reference for agentic harnesses:
 
@@ -149,8 +155,6 @@ Examples:
 The important point is:
 
 `your local KB is just the result of a query plus a little Python`
-
-Nothing important is hidden from you.
 
 ## What Files You Should Look At
 
