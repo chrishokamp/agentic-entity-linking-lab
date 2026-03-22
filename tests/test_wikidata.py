@@ -7,12 +7,14 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from wikidata_lab.extensions import AgenticLinkerTemplate, EntityCandidate, SimpleVectorStoreTemplate
+from wikidata_lab.agentic_linking import AgenticLinkerTemplate
+from wikidata_lab.candidate_retrieval import EntityCandidate, SimpleVectorStoreTemplate
 from wikidata_lab.wikidata import (
+    DEFAULT_BOOTSTRAP_QUERY_PATH,
     annotate_text,
-    build_current_irish_politicians_query,
     build_knowledge_base,
     build_surface_form_index,
+    load_sparql_query,
     normalize_surface_form,
 )
 
@@ -28,11 +30,12 @@ class StubEmbeddingProvider:
 
 
 class WikidataHelpersTest(unittest.TestCase):
-    def test_query_builder_includes_live_office_filters(self) -> None:
-        query = build_current_irish_politicians_query(limit=25)
+    def test_default_query_file_includes_live_office_filters(self) -> None:
+        self.assertTrue(DEFAULT_BOOTSTRAP_QUERY_PATH.exists())
+        query = load_sparql_query(DEFAULT_BOOTSTRAP_QUERY_PATH)
         self.assertIn("FILTER NOT EXISTS { ?positionStatement pq:P582 ?endTime }", query)
         self.assertIn("FILTER EXISTS { ?office (wdt:P17|wdt:P1001) wd:Q27 }", query)
-        self.assertIn("LIMIT 25", query)
+        self.assertIn("ORDER BY ?personLabel", query)
 
     def test_build_knowledge_base_groups_duplicate_people(self) -> None:
         rows = [

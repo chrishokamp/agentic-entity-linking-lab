@@ -6,31 +6,20 @@ import json
 import re
 import urllib.parse
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 DEFAULT_WIKIDATA_ENDPOINT = "https://query.wikidata.org/sparql"
 DEFAULT_USER_AGENT = "agentic-entity-linking-lab/0.1 (educational notebook)"
+PACKAGE_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = PACKAGE_ROOT.parent.parent
+QUERIES_DIR = PROJECT_ROOT / "queries"
+DEFAULT_BOOTSTRAP_QUERY_PATH = QUERIES_DIR / "current_living_irish_office_holders.sparql"
 
 
-def build_current_irish_politicians_query(limit: int | None = 200) -> str:
-    """Build a simple SPARQL query for living people holding office in Ireland."""
-    limit_clause = f"\nLIMIT {int(limit)}" if limit is not None else ""
-    return f"""
-SELECT DISTINCT ?person ?personLabel ?office ?officeLabel WHERE {{
-  ?person wdt:P31 wd:Q5;
-          wdt:P27 wd:Q27;
-          wdt:P106 wd:Q82955;
-          p:P39 ?positionStatement.
-  ?positionStatement ps:P39 ?office.
-
-  FILTER NOT EXISTS {{ ?person wdt:P570 ?dateOfDeath }}
-  FILTER NOT EXISTS {{ ?positionStatement pq:P582 ?endTime }}
-  FILTER EXISTS {{ ?office (wdt:P17|wdt:P1001) wd:Q27 }}
-
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
-}}
-ORDER BY ?personLabel{limit_clause}
-""".strip()
+def load_sparql_query(query_path: str | Path = DEFAULT_BOOTSTRAP_QUERY_PATH) -> str:
+    """Load SPARQL query text from a version-controlled .sparql file."""
+    return Path(query_path).read_text(encoding="utf-8").strip()
 
 
 def execute_sparql_query(
@@ -61,6 +50,17 @@ def execute_sparql_query(
     return rows
 
 
+def fetch_knowledge_base_from_query(
+    query: str,
+    *,
+    endpoint: str = DEFAULT_WIKIDATA_ENDPOINT,
+    timeout: int = 60,
+) -> tuple[list[dict[str, str]], list[dict[str, Any]]]:
+    """Execute a SPARQL query and convert the rows into the local KB format."""
+    rows = execute_sparql_query(query, endpoint=endpoint, timeout=timeout)
+    return rows, build_knowledge_base(rows)
+
+
 def build_knowledge_base(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
     """Collapse raw query rows into explicit entity records."""
     entities_by_uri: dict[str, dict[str, Any]] = {}
@@ -89,16 +89,20 @@ def build_knowledge_base(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
     return sorted(entities_by_uri.values(), key=lambda entity: entity["label"].lower())
 
 
-def fetch_current_irish_politicians(
+def fetch_default_bootstrap_knowledge_base(
     *,
     endpoint: str = DEFAULT_WIKIDATA_ENDPOINT,
-    limit: int | None = 200,
+    query_path: str | Path = DEFAULT_BOOTSTRAP_QUERY_PATH,
     timeout: int = 60,
 ) -> tuple[str, list[dict[str, str]], list[dict[str, Any]]]:
-    """Fetch the default educational KB bootstrap from Wikidata."""
-    query = build_current_irish_politicians_query(limit=limit)
-    rows = execute_sparql_query(query, endpoint=endpoint, timeout=timeout)
-    return query, rows, build_knowledge_base(rows)
+    """Fetch the default educational KB bootstrap from a named .sparql file."""
+    query = load_sparql_query(query_path)
+    rows, knowledge_base = fetch_knowledge_base_from_query(
+        query,
+        endpoint=endpoint,
+        timeout=timeout,
+    )
+    return query, rows, knowledge_base
 
 
 def normalize_surface_form(text: str) -> str:

@@ -1,259 +1,255 @@
 # Wikidata Entity Linking Lab
 
-This repository is a bootstrap lab for simple entity linking backed by Wikidata. The README is also the intro presentation: you can present directly from it, then point students into the notebook in [`notebooks/01_wikidata_bootstrap_entity_linking.ipynb`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/notebooks/01_wikidata_bootstrap_entity_linking.ipynb).
+This repository is for students. Use it to set up the lab on your laptop, run the baseline notebook, and then change the local knowledge base and linker yourself.
 
-## Lab Topic
+Open the main notebook here:
 
-Wikidata, open knowledge graphs, SPARQL, and agentic entity linking.
+[`notebooks/01_wikidata_bootstrap_entity_linking.ipynb`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/notebooks/01_wikidata_bootstrap_entity_linking.ipynb)
 
-## Session Format
+## What You Will Build
 
-1. 10-15 minute intro on Wikidata, SPARQL, and the lab pipeline.
-2. Students start from a bare-bones local KB bootstrapped from a single SPARQL query.
-3. Students extend the spotter, linker, vector retrieval, or agentic layer with support from lab monitors.
-
-## Core Idea
-
-The pipeline is intentionally simple and explicit:
-
-1. `Documents`
-2. `Spot`
-3. `Disambiguate`
-4. `Use`
-5. `Evaluate`
-
-The starting point is just:
+You will build a very simple entity linker backed by Wikidata:
 
 1. Run one SPARQL query against Wikidata.
-2. Turn the results into a tiny local KB.
-3. Build a surface-form dictionary from that KB.
-4. Annotate text with exact string matching.
+2. Turn the returned rows into a tiny local knowledge base.
+3. Build a surface-form index from that local KB.
+4. Annotate text with matching surface forms and Wikidata URIs.
 
-That baseline works with standard Python and the notebook alone. No embedding model, vector DB, or LLM backend is required for the default exercise.
-
-## Default Domain
-
-The default KB bootstrap targets:
+The default domain is:
 
 `living people currently holding a political office in Ireland`
 
-Operationally, the default SPARQL query asks for:
+You do not need an LLM or extra Python packages for the baseline.
 
-1. Humans (`wdt:P31 wd:Q5`)
-2. With Irish citizenship (`wdt:P27 wd:Q27`)
-3. With occupation politician (`wdt:P106 wd:Q82955`)
-4. With a current `position held` statement (`p:P39`)
-5. With no death date
-6. With no end date on the office-holding statement
-7. Where the office is tied to Ireland via `country` or `applies to jurisdiction`
+## Before The Lab
 
-## What Students See
-
-Nothing important is hidden.
-
-Students can inspect and change:
-
-1. The SPARQL string itself in [`src/wikidata_lab/wikidata.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/wikidata.py) and in the notebook.
-2. The raw rows returned by Wikidata.
-3. The code that groups those rows into a local KB.
-4. The code that builds the surface-form index.
-5. The exact string-matching annotator.
-
-That is deliberate. The KB bootstrap should be understandable, editable, and easy to repurpose.
-
-## How To Change Or Expand The KB
-
-To explore a different domain, students only need to change the query and rerun the notebook.
-
-Examples:
-
-1. Replace Irish politicians with Irish musicians by changing `wd:Q82955`.
-2. Replace Ireland with another country by changing `wd:Q27`.
-3. Remove the office filter to get a broader list of people.
-4. Add more properties to inspect, such as party membership, gender, place of birth, or aliases.
-5. Start from a different seed query entirely and keep the same local linking pipeline.
-
-The key teaching point is:
-
-`the local KB is just the result of a SPARQL query plus a little Python glue`
-
-## Repo Layout
-
-- [`notebooks/01_wikidata_bootstrap_entity_linking.ipynb`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/notebooks/01_wikidata_bootstrap_entity_linking.ipynb): baseline hands-on notebook
-- [`src/wikidata_lab/wikidata.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/wikidata.py): explicit SPARQL fetch, KB construction, and string-match linker
-- [`src/wikidata_lab/extensions.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/extensions.py): vector retrieval and agentic linking templates
-- [`tests/test_wikidata.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/tests/test_wikidata.py): offline unit tests
-- [`tests/test_live_wikidata.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/tests/test_live_wikidata.py): live API integration test
-
-## Intro Presentation
-
-### 1. What is Wikidata?
-
-Wikidata is an open knowledge graph. Entities have stable identifiers such as `Q27` for Ireland, labels, aliases, and graph relations.
-
-For entity linking, that gives us:
-
-1. A knowledge base we can query live.
-2. Stable URIs for linked entities.
-3. Labels and aliases that can become surface forms.
-4. Extra graph structure for disambiguation and fact checking.
-
-### 2. What is SPARQL?
-
-SPARQL is the graph query language used to retrieve a domain-specific slice of the KB.
-
-In this lab, SPARQL is not just a background detail. It is the mechanism that builds the local KB students will work with.
-
-### 3. Why start with a local KB?
-
-Because it makes the entity linking task concrete.
-
-Instead of trying to link every entity in the world, we bootstrap a compact domain KB and work against that first.
-
-This has three advantages:
-
-1. Students understand the search space.
-2. The baseline can be built with no extra dependencies.
-3. The extension path is clear: better spotting, better candidate retrieval, better disambiguation.
-
-### 4. Baseline Pipeline
-
-The baseline is:
-
-1. `SPARQL query -> raw rows`
-2. `raw rows -> local KB`
-3. `local KB -> surface-form index`
-4. `text -> matched surface forms -> Wikidata URIs`
-
-This is a rule-based string matcher. It is intentionally unsophisticated.
-
-That is useful pedagogically because students can immediately see:
-
-1. what works,
-2. what fails,
-3. and where vector or agentic methods help.
-
-### 5. Extension Routes
-
-Students can extend in several directions:
-
-1. Spotting: better mention detection, alias expansion, abbreviation handling, fuzzy matching.
-2. Linking logic: tie-breaking, office-aware heuristics, context windows.
-3. Vector retrieval: embed mentions and entities, retrieve candidates from a vector store, then disambiguate.
-4. Agentic linking: give the model mention text, context, and candidates and ask it to decide.
-5. Evaluation: exact-match metrics and optional LLM-as-a-judge workflows.
-
-## Setup Requirements
-
-Baseline:
+Install these on your laptop before you arrive:
 
 1. `git`
-2. Python 3.10+
+2. Python 3.10 or newer
 3. Jupyter Notebook or JupyterLab
 
-Optional agentic work:
+Check that they work:
 
-1. Access to an OpenAI-compatible LLM API, or
-2. A local model setup such as Ollama
+```bash
+git --version
+python3 --version
+jupyter --version
+```
 
-We do not assume session time will be spent on API setup. Students who want agentic extensions should ideally arrive with that already working.
+If one of those commands fails, fix that before the session if possible.
 
-For agentic harnesses, the recommended reference is the Claude Agent SDK:
+## Optional Setup For Agentic Extensions
+
+You only need this if you want to add LLM-based linking.
+
+You need one of:
+
+1. An API key for an OpenAI-compatible model provider
+2. A working local model setup such as Ollama
+
+We do not plan to spend much lab time debugging API setup. If you want to work on agentic linking, set that up in advance.
+
+Recommended reference for agentic harnesses:
 
 <https://github.com/anthropics/claude-agent-sdk-python>
 
-## Quick Start
+## Clone The Repo
 
 ```bash
 git clone <repo-url>
 cd agentic-entity-linking-lab
+```
+
+## Start Jupyter
+
+From the repository root, run:
+
+```bash
 jupyter notebook
+```
+
+or:
+
+```bash
+jupyter lab
 ```
 
 Then open:
 
 [`notebooks/01_wikidata_bootstrap_entity_linking.ipynb`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/notebooks/01_wikidata_bootstrap_entity_linking.ipynb)
 
-## The Default SPARQL Query
+## What To Do In The Notebook
 
-The repository keeps the query in code so students can edit it directly:
+Work through the notebook in order.
+
+You should:
+
+1. Print the default SPARQL query.
+2. Run it against Wikidata.
+3. Inspect the raw rows that come back.
+4. Inspect the grouped local KB.
+5. Build the surface-form index.
+6. Run the baseline string matcher on sample text.
+7. Start changing the KB or extending the linker.
+
+## Where To Change The Knowledge Base
+
+If you want to change the local KB, start with the SPARQL query.
+
+The default query file is here:
+
+[`queries/current_living_irish_office_holders.sparql`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/queries/current_living_irish_office_holders.sparql)
+
+This is the main file to edit if you want a different bootstrap KB.
+
+The Python code that loads and executes that query is here:
 
 [`src/wikidata_lab/wikidata.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/wikidata.py)
 
-The default query returns raw rows with:
+That is the pattern to copy for your own experiments:
+
+1. Put the SPARQL in a clearly named `.sparql` file.
+2. Load the file from Python.
+3. Execute it.
+4. Build your local KB from the returned rows.
+
+## What The Default Query Means
+
+The default query asks for people who are:
+
+1. Human
+2. Irish citizens
+3. Politicians
+4. Currently holding an office
+5. Still alive
+6. Holding an office tied to Ireland
+
+The returned rows include:
 
 1. `person`
 2. `personLabel`
 3. `office`
 4. `officeLabel`
 
-The notebook then groups rows by person and turns `personLabel` into the initial surface form.
+The notebook then groups those rows by person and uses `personLabel` as the initial surface form.
 
-That choice is intentional:
+## How To Change The Domain
 
-1. it keeps the live query readable,
-2. it keeps the KB bootstrap fast enough for a classroom setting,
-3. and it makes alias expansion an explicit exercise instead of hidden magic.
+If you want a different KB, edit the query and rerun the notebook.
 
-## How Students Explore The KB
+Examples:
 
-Suggested first steps in the notebook:
+1. Change Irish politicians to Irish musicians
+2. Change Ireland to another country
+3. Remove the office filter for a broader list
+4. Add more properties such as party, birthplace, or aliases
+5. Query a completely different kind of entity
 
-1. Print the raw SPARQL query.
-2. Print a few raw result rows.
-3. Inspect the grouped local KB.
-4. Add a new property to the query.
-5. Add a few aliases or alternate surface forms.
-6. Run the string matcher on a short paragraph and inspect the spans.
+The important point is:
 
-Suggested domain changes:
+`your local KB is just the result of a query plus a little Python`
 
-1. Irish ministers only
-2. Irish MEPs
-3. Irish athletes
-4. Irish universities
-5. Irish locations
+Nothing important is hidden from you.
 
-## Vector Retrieval Template
+## What Files You Should Look At
 
-The vector template in [`src/wikidata_lab/extensions.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/extensions.py) mirrors the same decomposition used in the SNOMED project:
+Start with these files:
 
-1. Start with entities in a local KB.
-2. Index entities into a vector store.
-3. Retrieve top-k candidates for a mention.
-4. Use the candidate list for disambiguation.
+- [`notebooks/01_wikidata_bootstrap_entity_linking.ipynb`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/notebooks/01_wikidata_bootstrap_entity_linking.ipynb): the main lab notebook
+- [`queries/current_living_irish_office_holders.sparql`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/queries/current_living_irish_office_holders.sparql): default SPARQL bootstrap query
+- [`src/wikidata_lab/wikidata.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/wikidata.py): query loading, query execution, KB construction, surface-form index, baseline annotator
+- [`src/wikidata_lab/candidate_retrieval.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/candidate_retrieval.py): vector retrieval template
+- [`src/wikidata_lab/agentic_linking.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/agentic_linking.py): context-driven agentic linker template
 
-The template is dependency-free and backend-agnostic. Students only need to plug in an embedding provider.
+## Baseline First
 
-## Agentic Linking Template
+Do the baseline before you add extensions.
 
-The agentic template also follows the reference project structure:
+The baseline is:
 
-1. Keep the baseline candidate set explicit.
-2. Extract a context window from the source text.
-3. Build a prompt containing mention, context, and candidates.
-4. Let an injected LLM backend choose the final URI.
+1. Query Wikidata
+2. Build a small local KB
+3. Build a string-matching spotter/linker
+4. Inspect successes and failures
 
-This keeps the harness simple while preserving the important architecture:
+That gives you something simple and working before you add complexity.
 
-`retrieval first, reasoning second`
+## Extension Routes
 
-## Evaluation
+After the baseline works, pick one direction:
 
-The baseline repository does not force a particular evaluation format, but there are two natural levels:
+1. Better spotting
+2. More surface forms and aliases
+3. Better disambiguation rules
+4. Vector retrieval for candidate generation
+5. Agentic context-aware linking
+6. Evaluation
 
-1. Deterministic evaluation against a small hand-labeled set.
-2. Optional LLM-as-a-judge workflows for exploratory analysis.
+## Vector Retrieval Extension
 
-## Tests
+If you want a vector-based candidate retrieval stage, start here:
 
-Run offline unit tests:
+[`src/wikidata_lab/candidate_retrieval.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/candidate_retrieval.py)
+
+This file contains:
+
+1. `EntityCandidate`
+2. `EmbeddingProvider`
+3. `SimpleVectorStoreTemplate`
+
+What you need to do:
+
+1. Plug in an embedding model or API
+2. Index the entities from your local KB
+3. Retrieve top-k candidates for a mention
+4. Compare retrieval results against the baseline string matcher
+
+## Agentic Linking Extension
+
+If you want a context-aware agentic linker, start here:
+
+[`src/wikidata_lab/agentic_linking.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/agentic_linking.py)
+
+This file contains:
+
+1. `extract_context_window`
+2. `AgenticLinkerTemplate`
+
+What you need to do:
+
+1. Build or retrieve a candidate set first
+2. Pass the text, mention span, and candidates into the template
+3. Connect `llm_call` to your chosen API or local model
+4. Inspect whether context changes the chosen URI
+
+The intended pattern is:
+
+`retrieve candidates first, reason over them second`
+
+## Suggested Student Tasks
+
+If you want a clear first task, do one of these:
+
+1. Change the SPARQL query to a different domain
+2. Add aliases manually and rerun the string matcher
+3. Add a second query to fetch aliases from Wikidata
+4. Improve normalization for accents and punctuation
+5. Build a tiny hand-labeled evaluation set
+6. Add a vector retriever
+7. Add an agentic disambiguation step
+
+## Run The Tests
+
+From the repository root:
+
+Run offline tests:
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-Run live Wikidata integration tests:
+Run the live Wikidata integration test:
 
 ```bash
 LIVE_WIKIDATA_TESTS=1 python3 -m unittest tests.test_live_wikidata -v
@@ -261,13 +257,33 @@ LIVE_WIKIDATA_TESTS=1 python3 -m unittest tests.test_live_wikidata -v
 
 The live test hits the real Wikidata Query Service and checks that the default query still returns valid rows.
 
-## Teaching Notes
+## If Something Fails
 
-If the room splits into setup help and coding work, the coding track can proceed immediately with:
+If `jupyter` does not run:
 
-1. the baseline query,
-2. the local KB,
-3. the string matcher,
-4. and one extension path.
+1. Make sure Jupyter is installed in the Python environment you are using
+2. Try `python3 -m notebook`
+3. Ask a lab monitor for help
 
-That keeps the workshop productive even if some students are still sorting out local environments.
+If the live query fails:
+
+1. Check your internet connection
+2. Rerun the cell after a short wait
+3. Make sure the Wikidata Query Service is reachable from your network
+
+If imports fail in the notebook:
+
+1. Make sure you opened Jupyter from the repository root
+2. Make sure the `src/` directory exists in the repo
+3. Restart the kernel and rerun from the top
+
+## Session Flow
+
+The plan for the session is:
+
+1. Short intro
+2. Baseline notebook
+3. Split into setup-help and coding groups if needed
+4. Extend the system in whichever direction you want
+
+If you are already set up, go straight to the notebook and start building.

@@ -1,33 +1,38 @@
 """Educational helpers for a Wikidata-backed entity linking lab."""
 
-from .extensions import (
+from .agentic_linking import (
     AgenticLinkerTemplate,
-    EntityCandidate,
-    SimpleVectorStoreTemplate,
     extract_context_window,
 )
+from .candidate_retrieval import EntityCandidate, SimpleVectorStoreTemplate
 from .wikidata import (
+    DEFAULT_BOOTSTRAP_QUERY_PATH,
     DEFAULT_WIKIDATA_ENDPOINT,
-    build_current_irish_politicians_query,
+    QUERIES_DIR,
+    annotate_text,
     build_knowledge_base,
     build_surface_form_index,
     execute_sparql_query,
-    fetch_current_irish_politicians,
+    fetch_default_bootstrap_knowledge_base,
+    fetch_knowledge_base_from_query,
+    load_sparql_query,
     normalize_surface_form,
-    annotate_text,
 )
 
 __all__ = [
     "AgenticLinkerTemplate",
+    "DEFAULT_BOOTSTRAP_QUERY_PATH",
     "DEFAULT_WIKIDATA_ENDPOINT",
     "EntityCandidate",
+    "QUERIES_DIR",
     "SimpleVectorStoreTemplate",
     "annotate_text",
-    "build_current_irish_politicians_query",
     "build_knowledge_base",
     "build_surface_form_index",
     "execute_sparql_query",
     "extract_context_window",
-    "fetch_current_irish_politicians",
+    "fetch_default_bootstrap_knowledge_base",
+    "fetch_knowledge_base_from_query",
+    "load_sparql_query",
     "normalize_surface_form",
 ]

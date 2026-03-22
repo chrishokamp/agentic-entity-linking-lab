@@ -9,7 +9,7 @@ from urllib.error import URLError
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from wikidata_lab.wikidata import fetch_current_irish_politicians
+from wikidata_lab.wikidata import fetch_default_bootstrap_knowledge_base
 
 
 @unittest.skipUnless(
@@ -19,7 +19,7 @@ from wikidata_lab.wikidata import fetch_current_irish_politicians
 class LiveWikidataQueryTest(unittest.TestCase):
     def test_live_query_returns_rows(self) -> None:
         try:
-            _, rows, kb = fetch_current_irish_politicians(limit=25, timeout=60)
+            _, rows, kb = fetch_default_bootstrap_knowledge_base(timeout=60)
         except URLError as exc:
             self.skipTest(f"Live network unavailable: {exc}")
 
