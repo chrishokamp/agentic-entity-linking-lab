@@ -34,31 +34,18 @@ You do not need an LLM or extra Python packages for the baseline.
 Install these on your laptop before you arrive:
 
 1. `git`
-2. Python 3.10 or newer
-3. Jupyter Notebook or JupyterLab
+2. `uv`
+3. Claude Code, if you want to try the local agentic disambiguator
 
 Check that they work:
 
 ```bash
 git --version
-python3 --version
-jupyter --version
+uv --version
+claude --help
 ```
 
-If one of those commands fails, fix that before the session if possible.
-
-## Optional Setup For Agentic Extensions
-
-You only need this if you want to add LLM-based linking.
-
-You need one of:
-
-1. An API key for an OpenAI-compatible model provider
-2. A working local model setup such as Ollama
-
-Recommended reference for agentic harnesses:
-
-<https://github.com/anthropics/claude-agent-sdk-python>
+If `claude --help` does not work, you can still do the baseline and vector parts of the lab.
 
 ## Clone The Repo
 
@@ -67,18 +54,35 @@ git clone <repo-url>
 cd agentic-entity-linking-lab
 ```
 
+## Create A uv Environment
+
+We recommend `uv` for all optional setup in this repo.
+
+Install Python 3.11 and create the environment:
+
+```bash
+uv python install 3.11
+uv sync --extra notebook
+```
+
+That gives you:
+
+1. a Python 3.11 environment for the repo
+2. Jupyter for the notebook
+3. the local package installed from `src/`
+
 ## Start Jupyter
 
 From the repository root, run:
 
 ```bash
-jupyter notebook
+uv run jupyter notebook
 ```
 
 or:
 
 ```bash
-jupyter lab
+uv run jupyter lab
 ```
 
 Then open:
@@ -98,6 +102,28 @@ You should:
 5. Build the surface-form index.
 6. Run the baseline string matcher on sample text.
 7. Start changing the KB or extending the linker.
+
+## Run The Default Pipeline On A Real Example Document
+
+There is an example document here:
+
+[`data/example_current_irish_office_holders.txt`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/data/example_current_irish_office_holders.txt)
+
+You can annotate it with the default KB like this:
+
+```bash
+uv run python scripts/run_default_annotation_pipeline.py \
+  --input-file data/example_current_irish_office_holders.txt
+```
+
+That command:
+
+1. loads the default `.sparql` query
+2. fetches the current default KB from Wikidata
+3. builds the surface-form index
+4. prints JSON annotations for the input text
+
+The notebook also shows the same pattern directly in Python by reading the example file and passing its contents to `annotate_text(...)`.
 
 ## Where To Change The Knowledge Base
 
@@ -161,10 +187,13 @@ The important point is:
 Start with these files:
 
 - [`notebooks/01_wikidata_bootstrap_entity_linking.ipynb`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/notebooks/01_wikidata_bootstrap_entity_linking.ipynb): the main lab notebook
+- [`data/example_current_irish_office_holders.txt`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/data/example_current_irish_office_holders.txt): sample text that annotates with the default KB
 - [`queries/current_living_irish_office_holders.sparql`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/queries/current_living_irish_office_holders.sparql): default SPARQL bootstrap query
 - [`src/wikidata_lab/wikidata.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/wikidata.py): query loading, query execution, KB construction, surface-form index, baseline annotator
 - [`src/wikidata_lab/candidate_retrieval.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/candidate_retrieval.py): vector retrieval template
+- [`src/wikidata_lab/sentence_transformer_embeddings.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/sentence_transformer_embeddings.py): sentence-transformers embedding provider
 - [`src/wikidata_lab/agentic_linking.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/agentic_linking.py): context-driven agentic linker template
+- [`src/wikidata_lab/agentic_disambiguator.py`](/Users/christopherhokamp/projects/agentic-entity-linking-lab/src/wikidata_lab/agentic_disambiguator.py): agentic disambiguation helper
 
 ## Baseline First
 
@@ -209,6 +238,38 @@ What you need to do:
 3. Retrieve top-k candidates for a mention
 4. Compare retrieval results against the baseline string matcher
 
+### Tested sentence-transformers setup
+
+Install the extra dependencies:
+
+```bash
+uv sync --extra notebook --extra vectors
+```
+
+Download the tested model:
+
+```bash
+uv run python scripts/download_sentence_transformer_model.py
+```
+
+This downloads:
+
+`sentence-transformers/all-MiniLM-L6-v2`
+
+Run the tested retrieval example:
+
+```bash
+uv run python scripts/run_sentence_transformer_candidate_retrieval.py \
+  --mention "Simon Harris"
+```
+
+That script:
+
+1. loads the default KB from Wikidata
+2. loads the sentence-transformers model
+3. indexes the KB labels
+4. prints top retrieval candidates as JSON
+
 ## Agentic Linking Extension
 
 If you want a context-aware agentic linker, start here:
@@ -231,6 +292,39 @@ The intended pattern is:
 
 `retrieve candidates first, reason over them second`
 
+### Tested Claude Code SDK setup
+
+This repo includes a local agentic disambiguator that follows the same basic SDK pattern we use in `/Users/christopherhokamp/projects/everything-app/relevant-codebases/agentic-curator`:
+
+1. build a prompt
+2. create `ClaudeAgentOptions`
+3. run `query(...)`
+4. collect the text response
+
+Install the extra dependencies:
+
+```bash
+uv sync --extra notebook --extra agentic
+```
+
+If Claude Code is installed locally and authenticated, run:
+
+```bash
+uv run python scripts/run_agentic_disambiguator.py \
+  --mention "Martin" \
+  --text "Martin said the government would bring the bill to the Dail next week." \
+  --start 0
+```
+
+That script:
+
+1. loads the default KB from Wikidata
+2. builds a small lexical candidate shortlist
+3. sends the mention, context, and candidates to Claude Code via the SDK
+4. prints JSON with the chosen URI
+
+If `claude --help` works on your machine, this is the setup path to try first.
+
 ## Suggested Student Tasks
 
 If you want a clear first task, do one of these:
@@ -250,13 +344,13 @@ From the repository root:
 Run offline tests:
 
 ```bash
-python3 -m unittest discover -s tests -v
+uv run python -m unittest discover -s tests -v
 ```
 
 Run the live Wikidata integration test:
 
 ```bash
-LIVE_WIKIDATA_TESTS=1 python3 -m unittest tests.test_live_wikidata -v
+LIVE_WIKIDATA_TESTS=1 uv run python -m unittest tests.test_live_wikidata -v
 ```
 
 The live test hits the real Wikidata Query Service and checks that the default query still returns valid rows.
@@ -287,7 +381,6 @@ The plan for the session is:
 
 1. Short intro
 2. Baseline notebook
-3. Split into setup-help and coding groups if needed
-4. Extend the system in whichever direction you want
+3. Break into groups and extend the system in whichever direction you want
 
-If you are already set up, go straight to the notebook and start building.
+If you are already set up, grab your group, go straight to the quickstart notebook, then start building!

@@ -10,6 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from wikidata_lab.wikidata import fetch_default_bootstrap_knowledge_base
+from wikidata_lab.wikidata import annotate_text, build_surface_form_index
 
 
 @unittest.skipUnless(
@@ -30,6 +31,20 @@ class LiveWikidataQueryTest(unittest.TestCase):
             self.assertTrue(entity["uri"].startswith("http://www.wikidata.org/entity/Q"))
             self.assertTrue(entity["label"])
             self.assertGreaterEqual(len(entity["surface_forms"]), 1)
+
+    def test_example_document_annotates_against_live_kb(self) -> None:
+        try:
+            _, _, kb = fetch_default_bootstrap_knowledge_base(timeout=60)
+        except URLError as exc:
+            self.skipTest(f"Live network unavailable: {exc}")
+
+        example_path = PROJECT_ROOT / "data" / "example_current_irish_office_holders.txt"
+        text = example_path.read_text(encoding="utf-8")
+        surface_form_index = build_surface_form_index(kb)
+        annotations = annotate_text(text, surface_form_index)
+
+        self.assertGreaterEqual(len(annotations), 4)
+        self.assertEqual(annotations[0]["text"], "Aengus Ó Snodaigh")
 
 
 if __name__ == "__main__":

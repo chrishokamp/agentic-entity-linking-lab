@@ -7,6 +7,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from wikidata_lab.agentic_disambiguator import (
+    build_lexical_candidate_shortlist,
+    parse_agentic_json_response,
+)
 from wikidata_lab.agentic_linking import AgenticLinkerTemplate
 from wikidata_lab.candidate_retrieval import EntityCandidate, SimpleVectorStoreTemplate
 from wikidata_lab.wikidata import (
@@ -170,6 +174,37 @@ class ExtensionTemplatesTest(unittest.TestCase):
         self.assertIn("Context:", prompt)
         self.assertIn("Mary Lou McDonald", prompt)
         self.assertIn("http://www.wikidata.org/entity/Q1", prompt)
+
+    def test_lexical_candidate_shortlist_prefers_overlap(self) -> None:
+        candidates = build_lexical_candidate_shortlist(
+            "Martin",
+            [
+                {
+                    "uri": "http://www.wikidata.org/entity/Q1",
+                    "label": "Micheal Martin",
+                    "current_offices": ["Taoiseach"],
+                    "metadata": {"wikidata_id": "Q1"},
+                },
+                {
+                    "uri": "http://www.wikidata.org/entity/Q2",
+                    "label": "Simon Harris",
+                    "current_offices": ["Tanaiste"],
+                    "metadata": {"wikidata_id": "Q2"},
+                },
+            ],
+            top_k=2,
+        )
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(candidates[0].label, "Micheal Martin")
+
+    def test_parse_agentic_json_response_accepts_fenced_json(self) -> None:
+        parsed = parse_agentic_json_response(
+            """```json
+{"chosen_uri":"http://www.wikidata.org/entity/Q1","confidence":"high"}
+```"""
+        )
+        self.assertEqual(parsed["chosen_uri"], "http://www.wikidata.org/entity/Q1")
+        self.assertEqual(parsed["confidence"], "high")
 
 
 if __name__ == "__main__":
